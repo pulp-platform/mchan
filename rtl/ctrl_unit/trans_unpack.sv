@@ -27,38 +27,39 @@ module trans_unpack
     )
    (
     
-    input  logic                       clk_i,
-    input  logic                       rst_ni,
+    input logic 		       clk_i,
+    input logic 		       rst_ni,
     
-    input  logic [TRANS_SID_WIDTH-1:0] mchan_sid_i,
-    input  logic [MCHAN_OPC_WIDTH-1:0] mchan_opc_i,
-    input  logic [MCHAN_LEN_WIDTH-1:0] mchan_len_i,
-    input  logic [TCDM_ADD_WIDTH-1:0]  mchan_tcdm_add_i,
-    input  logic [EXT_ADD_WIDTH-1:0]   mchan_ext_add_i,
-    input  logic                       mchan_inc_i,
-    input  logic                       mchan_req_i,
-    output logic                       mchan_gnt_o,
+    input logic [TRANS_SID_WIDTH-1:0]  mchan_sid_i,
+    input logic [MCHAN_OPC_WIDTH-1:0]  mchan_opc_i,
+    input logic [MCHAN_LEN_WIDTH-1:0]  mchan_len_i,
+    input logic [TCDM_ADD_WIDTH-1:0]   mchan_tcdm_add_i,
+    input logic [EXT_ADD_WIDTH-1:0]    mchan_ext_add_i,
+    input logic 		       mchan_inc_i,
+    input logic 		       mchan_req_i,
+    output logic 		       mchan_gnt_o,
+    output logic [MCHAN_LEN_WIDTH-1:0] mchan_cmd_nb_o,
     
     output logic [TRANS_SID_WIDTH-1:0] tcdm_sid_o,
     output logic [TCDM_ADD_WIDTH-1:0]  tcdm_add_o,
     output logic [TCDM_OPC_WIDTH-1:0]  tcdm_opc_o,
     output logic [MCHAN_LEN_WIDTH-1:0] tcdm_len_o,
-    output logic                       tcdm_req_o,
-    input  logic                       tcdm_gnt_i,
+    output logic 		       tcdm_req_o,
+    input logic 		       tcdm_gnt_i,
     
     output logic [TRANS_SID_WIDTH-1:0] ext_sid_o,
     output logic [EXT_ADD_WIDTH-1:0]   ext_add_o,
     output logic [EXT_OPC_WIDTH-1:0]   ext_opc_o,
     output logic [MCHAN_LEN_WIDTH-1:0] ext_len_o,
-    output logic                       ext_bst_o,
-    output logic                       ext_req_o,
-    input  logic                       ext_gnt_i,
+    output logic 		       ext_bst_o,
+    output logic 		       ext_req_o,
+    input logic 		       ext_gnt_i,
     
-    output logic [2:0]                 trans_tx_ext_add_o,
-    output logic [2:0]                 trans_tx_tcdm_add_o,
+    output logic [2:0] 		       trans_tx_ext_add_o,
+    output logic [2:0] 		       trans_tx_tcdm_add_o,
     output logic [MCHAN_LEN_WIDTH-1:0] trans_tx_len_o,
-    output logic                       trans_tx_req_o,
-    input  logic                       trans_tx_gnt_i
+    output logic 		       trans_tx_req_o,
+    input logic 		       trans_tx_gnt_i
     
     );
    
@@ -68,7 +69,7 @@ module trans_unpack
    
    // FSM SIGNALS
    logic [EXT_OPC_WIDTH-1:0] 	       s_mchan_opc;
-   logic [MCHAN_LEN_WIDTH-1:0] 	       s_mchan_len,s_mchan_init_rem_len,s_mchan_init_rem_len_plus;
+   logic [MCHAN_LEN_WIDTH-1:0] 	       s_mchan_len,s_mchan_init_rem_len;
    logic [TCDM_ADD_WIDTH-1:0] 	       s_mchan_tcdm_add;
    logic [EXT_ADD_WIDTH-1:0] 	       s_mchan_ext_add;
    logic                               s_mchan_inc;
@@ -99,7 +100,7 @@ module trans_unpack
    // CHECKS BURST BOUNDARY CROSSING CONDITION
    always_comb
      begin
-	if ( mchan_ext_add_i[EXT_ADD_WIDTH-1:$clog2(MCHAN_BURST_LENGTH)] != ( ( ( mchan_ext_add_i + ( mchan_len_i + 1 ) ) -1 ) >>  $clog2(MCHAN_BURST_LENGTH) ) )
+	if ( mchan_ext_add_i[EXT_ADD_WIDTH-1:$clog2(MCHAN_BURST_LENGTH)] != ( ( mchan_ext_add_i + mchan_len_i ) >>  $clog2(MCHAN_BURST_LENGTH) ) )
 	  s_ext_add_burst_crossed = 1'b1;
 	else
 	  s_ext_add_burst_crossed = 1'b0;
@@ -111,15 +112,14 @@ module trans_unpack
 	if ( s_ext_add_burst_crossed == 1'b0  )
 	  s_mchan_first_len = mchan_len_i; // BURST BOUNDARY NOT CROSSED
 	else
-	  s_mchan_first_len = MCHAN_BURST_LENGTH - 1 - mchan_ext_add_i[$clog2(MCHAN_BURST_LENGTH)-1:0]; // BURST BOUNDARY CROSSED
+	  s_mchan_first_len = MCHAN_BURST_LENGTH - mchan_ext_add_i[$clog2(MCHAN_BURST_LENGTH)-1:0]; // BURST BOUNDARY CROSSED
      end
    
-   assign s_mchan_init_rem_len      = mchan_len_i - (s_mchan_first_len + 1);
-   assign s_mchan_init_rem_len_plus = s_mchan_init_rem_len + 1;
+   assign s_mchan_init_rem_len = mchan_len_i - s_mchan_first_len;
    
    always_comb
      begin
-	if ( s_mchan_init_rem_len_plus[$clog2(MCHAN_BURST_LENGTH)-1:0] == 0 )
+	if ( s_mchan_init_rem_len[$clog2(MCHAN_BURST_LENGTH)-1:0] == 0 )
 	  s_ext_add_burst_aligned = 1'b1;
 	else
 	  s_ext_add_burst_aligned = 1'b0;
@@ -132,9 +132,9 @@ module trans_unpack
 	  s_mchan_cmd_nb = 0;
 	else
 	  if ( s_ext_add_burst_aligned == 1'b1 )
-	    s_mchan_cmd_nb = s_mchan_init_rem_len_plus >> $clog2(MCHAN_BURST_LENGTH);
+	    s_mchan_cmd_nb = s_mchan_init_rem_len >> $clog2(MCHAN_BURST_LENGTH);
 	  else
-	    s_mchan_cmd_nb = ( s_mchan_init_rem_len_plus >> $clog2(MCHAN_BURST_LENGTH) ) + 1;
+	    s_mchan_cmd_nb = ( s_mchan_init_rem_len >> $clog2(MCHAN_BURST_LENGTH) ) + 1;
      end
    
    //**********************************************************
@@ -171,7 +171,7 @@ module trans_unpack
 	if (rst_ni == 1'b0)
 	  begin
 	     s_mchan_cur_len <= '0;  // LENGTH OF CURRENT MCHAN TRANSACTION
-	     s_mchan_rem_len <= '0;   // REMAINING LENGHT OF CURRENT MCHAN TRANSFER
+	     s_mchan_rem_len <= '0;  // REMAINING LENGHT OF CURRENT MCHAN TRANSFER
 	  end
 	else
 	  begin
@@ -430,5 +430,6 @@ module trans_unpack
    assign trans_tx_tcdm_add_o = tcdm_add_o[2:0];
    assign trans_tx_len_o = s_mchan_len;
    assign trans_tx_req_o = ext_req_o && tcdm_req_o;
-   
+   assign mchan_cmd_nb_o = s_mchan_cmd_nb + 1;
+     
 endmodule

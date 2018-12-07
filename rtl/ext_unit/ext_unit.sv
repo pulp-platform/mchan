@@ -28,6 +28,8 @@ module ext_unit
    (
     input  logic                        clk_i,
     input  logic                        rst_ni,
+
+    input  logic                        test_mode_i,
     
     // AXI4 MASTER
     //***************************************
@@ -214,7 +216,7 @@ module ext_unit
    //*************** TX COMMAND QUEUE *************************
    //**********************************************************
    
-   mchan_fifo
+   generic_fifo
      #(
        .DATA_WIDTH(EXT_TX_CMD_QUEUE_WIDTH),
        .DATA_DEPTH(2)
@@ -222,16 +224,18 @@ module ext_unit
    tx_cmd_queue_i
      (
       
-      .clk_i(clk_i),
-      .rst_ni(rst_ni),
+      .clk         (clk_i),
+      .rst_n       (rst_ni),
       
-      .push_dat_i({ext_tx_bst_i,ext_tx_opc_i,ext_tx_len_i,ext_tx_add_i,ext_tx_sid_i}),
-      .push_req_i(ext_tx_req_i),
-      .push_gnt_o(ext_tx_gnt_o),
+      .data_i      ({ext_tx_bst_i,ext_tx_opc_i,ext_tx_len_i,ext_tx_add_i,ext_tx_sid_i}),
+      .valid_i     (ext_tx_req_i),
+      .grant_o     (ext_tx_gnt_o),
       
-      .pop_dat_o({s_tx_bst,s_tx_opc,s_tx_len,s_tx_add,s_tx_sid}),
-      .pop_req_i(s_tx_gnt),
-      .pop_gnt_o(s_tx_req)
+      .data_o      ({s_tx_bst,s_tx_opc,s_tx_len,s_tx_add,s_tx_sid}),
+      .grant_i     (s_tx_gnt),
+      .valid_o     (s_tx_req),
+
+      .test_mode_i (test_mode_i)
       
       );
    
@@ -239,7 +243,7 @@ module ext_unit
    //*************** RX COMMAND QUEUE *************************
    //**********************************************************
    
-   mchan_fifo
+   generic_fifo
      #(
        .DATA_WIDTH(EXT_RX_CMD_QUEUE_WIDTH),
        .DATA_DEPTH(2)
@@ -247,16 +251,18 @@ module ext_unit
    rx_cmd_queue_i
      (
       
-      .clk_i(clk_i),
-      .rst_ni(rst_ni),
+      .clk         (clk_i),
+      .rst_n       (rst_ni),
       
-      .push_dat_i({ext_rx_bst_i,ext_rx_opc_i,ext_rx_len_i,ext_rx_add_i,ext_rx_r_add_i,ext_rx_sid_i}),
-      .push_req_i(ext_rx_req_i),
-      .push_gnt_o(ext_rx_gnt_o),
+      .data_i      ({ext_rx_bst_i,ext_rx_opc_i,ext_rx_len_i,ext_rx_add_i,ext_rx_r_add_i,ext_rx_sid_i}),
+      .valid_i     (ext_rx_req_i),
+      .grant_o     (ext_rx_gnt_o),
       
-      .pop_dat_o({s_rx_bst,s_rx_opc,s_rx_len,s_rx_add,s_rx_r_add,s_rx_sid}),
-      .pop_req_i(s_rx_gnt),
-      .pop_gnt_o(s_rx_req)
+      .data_o      ({s_rx_bst,s_rx_opc,s_rx_len,s_rx_add,s_rx_r_add,s_rx_sid}),
+      .grant_i     (s_rx_gnt),
+      .valid_o     (s_rx_req),
+
+      .test_mode_i (test_mode_i)
       
       );
    
