@@ -23,8 +23,8 @@ module ctrl_fsm
     parameter TWD_QUEUE_DEPTH     = 4,
     parameter PE_ID_WIDTH         = 1,
     // DEFINED IN MCHAN_DEFINES
-    parameter TWD_QUEUE_ADD_WIDTH = $clog2(TWD_QUEUE_DEPTH),
-    parameter TRANS_SID_WIDTH     = $clog2(NB_TRANSFERS),
+    parameter TWD_QUEUE_ADD_WIDTH = (TWD_QUEUE_DEPTH == 1) ? 1 : $clog2(TWD_QUEUE_DEPTH),
+    parameter TRANS_SID_WIDTH     = (NB_TRANSFERS == 1) ? 1 : $clog2(NB_TRANSFERS),
     parameter MCHAN_OPC_WIDTH     = `MCHAN_OPC_WIDTH,
     parameter MCHAN_LEN_WIDTH     = `MCHAN_LEN_WIDTH
     )
@@ -128,11 +128,14 @@ module ctrl_fsm
     
     );
    
-   enum 				   `ifdef SYNTHESIS logic [4:0] `endif { IDLE, STATUS_GRANTED, RET_ID_GRANTED, CLR_ID_GRANTED, CMD, CMD_GRANTED, TCDM, TCDM_GRANTED, EXT, EXT_GRANTED, TWD_EXT, TWD_EXT_GRANTED, TWD_EXT_GRANTED_NOWAIT, TWD_TCDM, TWD_TCDM_GRANTED, TWD_TCDM_GRANTED_NOWAIT, BUSY, BUSY2 } CS, NS;
+   enum 				   `ifdef SYNTHESIS logic [4:0] `endif { IDLE, STATUS_GRANTED, RET_ID_GRANTED, CLR_ID_GRANTED, CMD, CMD_GRANTED, TCDM, TCDM_GRANTED, EXT, EXT_GRANTED, TWD_EXT_COUNT, TWD_EXT_COUNT_GRANTED, TWD_EXT_STRIDE, TWD_EXT_STRIDE_GRANTED, TWD_TCDM_COUNT, TWD_TCDM_COUNT_GRANTED, TWD_TCDM_STRIDE, TWD_TCDM_STRIDE_GRANTED, BUSY, BUSY2 } CS, NS;
    
-   logic [TWD_QUEUE_ADD_WIDTH-1:0] 	   s_twd_ext_add,s_twd_tcdm_add; 
+   logic [TWD_QUEUE_ADD_WIDTH-1:0] 	   s_twd_ext_add,s_twd_tcdm_add;
    logic 				   s_twd_ext_trans,s_twd_tcdm_trans;
+   logic [TWD_COUNT_WIDTH:0] 	           s_twd_ext_count,s_twd_tcdm_count;
+   logic 				   s_twd_ext_count_en,s_twd_tcdm_count_en;
    logic [TRANS_SID_WIDTH-1:0] 		   s_trans_sid;
+   logic 				   s_arb_barrier;
    
    //**********************************************************
    //*************** ADDRESS DECODER **************************
@@ -168,6 +171,8 @@ module ctrl_fsm
 	twd_ext_queue_req_o  = 1'b0;
 	twd_tcdm_queue_req_o = 1'b0;
 	busy_o               = 1'b1;
+	s_twd_ext_count_en   = 1'b0;
+	s_twd_tcdm_count_en  = 1'b0;
 	
 	case(CS)
 	  
@@ -207,7 +212,7 @@ module ctrl_fsm
 					    ctrl_targ_gnt_o = 1'b1;
 					    cmd_req_o       = 1'b1;
 					 end
-
+				       
 				       2'b01:
 					 begin
 					    begin
@@ -603,76 +608,101 @@ module ctrl_fsm
 		      begin
 			 if ( s_twd_ext_trans == 1'b1 ) // IT'S A TWD EXT TRANSFER
 			   begin
-			      twd_ext_queue_req_o = 1'b1;
-			      ctrl_targ_gnt_o = 1'b1;
-			      if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-				NS                  = TWD_EXT_GRANTED_NOWAIT;
-			      else
-				NS                  = TWD_EXT_GRANTED;
+			      s_twd_ext_count_en  = 1'b1;
+			      ctrl_targ_gnt_o     = 1'b1;
+			      NS                  = TWD_EXT_COUNT_GRANTED;
 			   end
 			 else // NOT A TWD EXT TRANSFER
 			   begin
 			      if ( s_twd_tcdm_trans == 1'b1 ) // IT'S A TWD TCDM TRANSFER
 				begin
-				   twd_tcdm_queue_req_o = 1'b1;
-				   ctrl_targ_gnt_o = 1'b1;
-				   if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-				     NS                  = TWD_TCDM_GRANTED_NOWAIT;
-				   else
-				     NS                  = TWD_TCDM_GRANTED;
+				   s_twd_tcdm_count_en = 1'b1;
+				   ctrl_targ_gnt_o     = 1'b1;
+				   NS                  = TWD_TCDM_COUNT_GRANTED;
 				end
 			      else // NOT A 2D TRANSFER
 				begin
-				   if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-				     NS                  = BUSY2;
-				   else
-				     NS                  = BUSY;
+				   NS = BUSY;
 				end
 			   end
 		      end
 		    else // ERROR READ OPERATION OR WRITE OPERATION AT WRONG ADDRESS
 		      begin
-			 if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-			   NS                  = BUSY2;
-			 else
-			   NS                  = BUSY;
+			 NS = BUSY;
 		      end
 		 end
 	       else // NOT A REQUEST
 		 begin
 		    if ( s_twd_ext_trans == 1'b1 ) // IT'S A TWD EXT TRANSFER
 		      begin
-			 NS = TWD_EXT;
+			 NS = TWD_EXT_COUNT;
 		      end
 		    else
 		      begin
 			 if ( s_twd_tcdm_trans == 1'b1 ) // IT'S A TWD TCDM TRANSFER
 			   begin
-			      NS = TWD_TCDM;
+			      NS = TWD_TCDM_COUNT;
 			   end
 			 else
 			   begin
-			      if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-				NS                  = BUSY2;
-			      else
-				NS                  = BUSY;
+				NS = BUSY;
 			   end
 		      end
 		 end
 	    end
 	  
-	  TWD_EXT:
+	  TWD_EXT_COUNT:
+	    begin
+	       if ( ctrl_targ_req_i == 1'b1 )
+		 begin
+		    if( ctrl_targ_type_i == 1'b0 && ctrl_targ_add_i[3:2] == `MCHAN_CMD_ADDR )
+		      begin
+			 ctrl_targ_gnt_o    = 1'b1;
+			 s_twd_ext_count_en = 1'b1;
+			 NS                 = TWD_EXT_COUNT_GRANTED;
+		      end
+		    else // WRONG ADDRESS/POLARITY
+		      begin
+			 NS = IDLE; // ERROR
+		      end
+		 end
+	       else
+		 begin
+		    NS = TWD_EXT_COUNT;
+		 end
+	    end
+	  
+	  TWD_EXT_COUNT_GRANTED:
+	    begin
+	       ctrl_targ_r_valid_o = 1'b1;
+	       if ( ctrl_targ_req_i == 1'b1 )
+		 begin
+		    if( ctrl_targ_type_i == 1'b0 && ctrl_targ_add_i[3:2] == `MCHAN_CMD_ADDR )
+		      begin
+			 ctrl_targ_gnt_o     = 1'b1;
+			 twd_ext_queue_req_o = 1'b1;
+			 NS                  = TWD_EXT_STRIDE_GRANTED;
+		      end
+		    else // WRONG ADDRESS/POLARITY
+		      begin
+			 NS = IDLE; // ERROR
+		      end
+		 end
+	       else
+		 begin
+		    NS = TWD_EXT_STRIDE;
+		 end
+	    end
+	  
+	  TWD_EXT_STRIDE:
 	    begin
 	       if ( ctrl_targ_req_i == 1'b1 ) // TWD ADDR FIFO NOT FULL
 		 begin
 		    if( ctrl_targ_type_i == 1'b0 && ctrl_targ_add_i[3:2] == `MCHAN_CMD_ADDR )
 		      begin
-			 ctrl_targ_gnt_o = 1'b1;
+			 ctrl_targ_gnt_o     = 1'b1;
 			 twd_ext_queue_req_o = 1'b1;
-			 if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-			   NS                  = TWD_EXT_GRANTED_NOWAIT;
-			 else
-			   NS                  = TWD_EXT_GRANTED;
+			 NS                  = TWD_EXT_STRIDE_GRANTED;
 		      end
 		    else
 		      begin // WRONG ADDRESS/POLARITY
@@ -681,11 +711,11 @@ module ctrl_fsm
 		 end
 	       else
 		 begin
-		    NS              = TWD_EXT;
+		    NS = TWD_EXT_STRIDE;
 		 end
 	    end
 	  
-	  TWD_EXT_GRANTED:
+	  TWD_EXT_STRIDE_GRANTED:
 	    begin
 	       ctrl_targ_r_valid_o = 1'b1;
 	       if ( ctrl_targ_req_i == 1'b1 )
@@ -694,70 +724,42 @@ module ctrl_fsm
 		      begin
 			 if ( s_twd_tcdm_trans == 1'b1 ) // IT'S A TWD TCDM TRANSFER
 			   begin
-			      twd_tcdm_queue_req_o = 1'b1;
-			      ctrl_targ_gnt_o = 1'b1;
-			      if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-				NS                  = TWD_TCDM_GRANTED_NOWAIT;
-			      else
-				NS                  = TWD_TCDM_GRANTED;
+			      ctrl_targ_gnt_o      = 1'b1;
+			      s_twd_tcdm_count_en  = 1'b1;
+			      NS                   = TWD_TCDM_COUNT_GRANTED;
 			   end
 			 else // NOT A TWD TCDM TRANSFER
 			   begin
-			      if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-				NS                  = BUSY2;
-			      else
-				NS                  = BUSY;
+			      NS = BUSY;
 			   end
 		      end
 		    else // ERROR READ OPERATION OR WRITE OPERATION AT WRONG ADDRESS
 		      begin
-			 if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-			   NS                  = BUSY2;
-			 else
-			   NS                  = BUSY;
+			 NS = BUSY;
 		      end
 		 end
 	       else // NOT A REQUEST
 		 begin
 		    if ( s_twd_tcdm_trans == 1'b1 ) // IT'S A TWD TCDM TRANSFER
 		      begin
-			 NS = TWD_TCDM;
+			 NS = TWD_TCDM_COUNT;
 		      end
 		    else
 		      begin
-			 if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-			   NS                  = BUSY2;
-			 else
-			   NS                  = BUSY;
+			 NS = BUSY;
 		      end
 		 end
 	    end
 	  
-	  TWD_EXT_GRANTED_NOWAIT:
-	    begin
-	       ctrl_targ_r_valid_o = 1'b1;
-	       if ( s_twd_tcdm_trans == 1'b1 ) // IT'S A TWD TCDM TRANSFER
-		 begin
-		    NS                  = TWD_TCDM;
-		 end
-	       else
-		 begin
-		    NS                  = BUSY2;
-		 end
-	    end
-	  
-	  TWD_TCDM:
+	  TWD_TCDM_COUNT:
 	    begin
 	       if ( ctrl_targ_req_i == 1'b1 ) // TWD ADDR FIFO NOT FULL
 		 begin
 		    if( ctrl_targ_type_i == 1'b0 && ctrl_targ_add_i[3:2] == `MCHAN_CMD_ADDR )
 		      begin
-			 ctrl_targ_gnt_o = 1'b1;
-			 twd_tcdm_queue_req_o = 1'b1;
-			 if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-			   NS                  = TWD_TCDM_GRANTED_NOWAIT;
-			 else
-			   NS                  = TWD_TCDM_GRANTED;
+			 ctrl_targ_gnt_o     = 1'b1;
+			 s_twd_tcdm_count_en = 1'b1;
+			 NS                  = TWD_TCDM_COUNT_GRANTED;
 		      end
 		    else
 		      begin // WRONG ADDRESS/POLARITY
@@ -766,30 +768,63 @@ module ctrl_fsm
 		 end
 	       else
 		 begin
-		    NS              = TWD_TCDM;
+		    NS              = TWD_TCDM_COUNT;
 		 end
 	    end
 	  
-	  TWD_TCDM_GRANTED:
+	  TWD_TCDM_COUNT_GRANTED:
 	    begin
 	       ctrl_targ_r_valid_o = 1'b1;
-	       begin
-		  if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
-		    NS                  = BUSY2;
-		  else
-		    NS                  = BUSY;
-	       end
+	       if ( ctrl_targ_req_i == 1'b1 )
+		 begin
+		    if( ctrl_targ_type_i == 1'b0 && ctrl_targ_add_i[3:2] == `MCHAN_CMD_ADDR )
+		      begin
+			 ctrl_targ_gnt_o      = 1'b1;
+			 twd_tcdm_queue_req_o = 1'b1;
+			 NS                   = TWD_TCDM_STRIDE_GRANTED;
+		      end
+		    else // ERROR READ OPERATION OR WRITE OPERATION AT WRONG ADDRESS
+		      begin
+			 NS = BUSY;
+		      end
+		 end
+	       else // NOT A REQUEST
+		 begin
+		    NS = TWD_TCDM_STRIDE;
+		 end
 	    end
 	  
-	  TWD_TCDM_GRANTED_NOWAIT:
+	  TWD_TCDM_STRIDE:
 	    begin
 	       ctrl_targ_r_valid_o = 1'b1;
-	       NS                  = BUSY2;
+	       if ( ctrl_targ_req_i == 1'b1 )
+		 begin
+		    if( ctrl_targ_type_i == 1'b0 && ctrl_targ_add_i[3:2] == `MCHAN_CMD_ADDR )
+		      begin
+			 ctrl_targ_gnt_o      = 1'b1;
+			 twd_tcdm_queue_req_o = 1'b1;
+			 NS                   = TWD_TCDM_STRIDE_GRANTED;
+		      end
+		    else // ERROR READ OPERATION OR WRITE OPERATION AT WRONG ADDRESS
+		      begin
+			 NS = BUSY;
+		      end
+		 end
+	       else // NOT A REQUEST
+		 begin
+		    NS = TWD_TCDM_STRIDE;
+		 end
+	    end
+	  
+	  TWD_TCDM_STRIDE_GRANTED:
+	    begin
+	       ctrl_targ_r_valid_o = 1'b1;
+	       NS                  = BUSY;
 	    end
 	  
 	  BUSY:
 	    begin
-	       if( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
+	       if( s_arb_barrier == 1'b0 )
 		 NS                  = BUSY2;
 	       else
 		 NS                  = BUSY;
@@ -921,6 +956,61 @@ module ctrl_fsm
 	       end
 	  end
      end
+
+   // TWD EXT COUNT REG
+   always_ff @(posedge clk_i, negedge rst_ni)
+     begin
+	if(rst_ni == 1'b0)
+	  begin
+	     s_twd_ext_count <= '0;
+	  end
+	else
+	  begin
+	     if ( s_twd_ext_count_en == 1'b1 )
+	       begin
+		  s_twd_ext_count <= ctrl_targ_data_i[TWD_COUNT_WIDTH:0];
+	       end
+	  end
+     end
+   
+   // TWD TCDM COUNT REG
+   always_ff @(posedge clk_i, negedge rst_ni)
+     begin
+	if(rst_ni == 1'b0)
+	  begin
+	     s_twd_tcdm_count <= '0;
+	  end
+	else
+	  begin
+	     if ( s_twd_tcdm_count_en == 1'b1 )
+	       begin
+		  s_twd_tcdm_count <= ctrl_targ_data_i[TWD_COUNT_WIDTH:0];
+	       end
+	  end
+     end
+   
+   // REGISTER TO INTERNALLY STORE ARBITER BARRIER (BE SURE THAT THE COMMAND IS ARBITRATED AND SUBMITTED BEFORE A NEW TRANSACTION IS ENQUEUED)
+   always_ff @(posedge clk_i, negedge rst_ni)
+     begin
+	if(rst_ni == 1'b0)
+	  begin
+	     s_arb_barrier <= 1'b0;
+	  end
+	else
+	  begin
+	     if (cmd_req_o == 1'b1 && cmd_gnt_i == 1'b1)
+	       begin
+		  s_arb_barrier <= 1'b1;
+	       end
+	     else
+	       begin
+		  if ( ( arb_req_i == 1'b1 ) && ( arb_gnt_i == 1'b1 ) && ( arb_sid_i == s_trans_sid ) )
+		    begin
+		       s_arb_barrier <= 1'b0;
+		    end
+	       end
+	  end
+     end
    
    assign cmd_len_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH:0]-1;                 // TRANSFER LENGTH
    assign cmd_opc_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+1:MCHAN_LEN_WIDTH+1]; // TRANSFER OPCODE
@@ -933,19 +1023,18 @@ module ctrl_fsm
    assign cmd_twd_ext_add_o       = twd_ext_alloc_add_i;
    assign cmd_twd_tcdm_add_o      = twd_tcdm_alloc_add_i;
    assign cmd_sid_o               = s_trans_sid;
-
    
    assign tcdm_add_o              = ctrl_targ_data_i[TCDM_ADD_WIDTH-1:0];
    assign ext_add_o               = ctrl_targ_data_i[EXT_ADD_WIDTH-1:0];
    
-   assign twd_ext_queue_count_o   = ctrl_targ_data_i[TWD_COUNT_WIDTH:0]-1;
-   assign twd_ext_queue_stride_o  = ctrl_targ_data_i[15+TWD_STRIDE_WIDTH:16]-1;
+   assign twd_ext_queue_count_o   = s_twd_ext_count[TWD_COUNT_WIDTH:0]-1;
+   assign twd_ext_queue_stride_o  = ctrl_targ_data_i[TWD_STRIDE_WIDTH:0]-1;
    assign twd_ext_queue_add_o     = s_twd_ext_add;
    assign twd_ext_queue_sid_o     = s_trans_sid;
    assign twd_ext_trans_o         = s_twd_ext_trans;
    
-   assign twd_tcdm_queue_count_o  = ctrl_targ_data_i[TWD_COUNT_WIDTH:0]-1;
-   assign twd_tcdm_queue_stride_o = ctrl_targ_data_i[15+TWD_STRIDE_WIDTH:16]-1;
+   assign twd_tcdm_queue_count_o  = s_twd_tcdm_count[TWD_COUNT_WIDTH:0]-1;
+   assign twd_tcdm_queue_stride_o = ctrl_targ_data_i[TWD_STRIDE_WIDTH:0]-1;
    assign twd_tcdm_queue_add_o    = s_twd_tcdm_add;
    assign twd_tcdm_queue_sid_o    = s_trans_sid;
    assign twd_tcdm_trans_o        = s_twd_tcdm_trans;

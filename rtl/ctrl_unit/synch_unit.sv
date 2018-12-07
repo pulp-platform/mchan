@@ -23,9 +23,11 @@ module synch_unit
     parameter MCHAN_BURST_LENGTH = 64,
     parameter TWD_COUNT_WIDTH    = 16,
     parameter TWD_STRIDE_WIDTH   = 16,
-    parameter TWD_QUEUE_WIDTH    = TWD_COUNT_WIDTH+TWD_STRIDE_WIDTH,
     // DEFINED IN MCHAN_DEFINES
-    parameter MCHAN_LEN_WIDTH    = `MCHAN_LEN_WIDTH
+    parameter MCHAN_LEN_WIDTH    = `MCHAN_LEN_WIDTH,
+    // DERIVED
+    parameter TWD_QUEUE_WIDTH    = TWD_COUNT_WIDTH+TWD_STRIDE_WIDTH,
+    parameter MCHAN_CMD_WIDTH    = MCHAN_LEN_WIDTH - $clog2(MCHAN_BURST_LENGTH) + 1
     )
    (
     
@@ -36,12 +38,12 @@ module synch_unit
     input logic 		      mchan_tx_req_i,
     input logic 		      mchan_tx_gnt_i,
     input logic [TRANS_SID_WIDTH-1:0] mchan_tx_sid_i,
-    input logic [MCHAN_LEN_WIDTH-1:0] mchan_tx_cmd_nb_i,
+    input logic [MCHAN_CMD_WIDTH-1:0] mchan_tx_cmd_nb_i,
     
     input logic 		      mchan_rx_req_i,
     input logic 		      mchan_rx_gnt_i,
     input logic [TRANS_SID_WIDTH-1:0] mchan_rx_sid_i,
-    input logic [MCHAN_LEN_WIDTH-1:0] mchan_rx_cmd_nb_i,
+    input logic [MCHAN_CMD_WIDTH-1:0] mchan_rx_cmd_nb_i,
     
     // RELEASE INTERFACE
     input logic 		      ext_tx_synch_req_i,
@@ -63,12 +65,12 @@ module synch_unit
     output logic 		      term_sig_o
     );
       
-   logic [MCHAN_LEN_WIDTH-1:0] 			    s_tcdm_cmd_nb, s_ext_cmd_nb;
+   logic [MCHAN_CMD_WIDTH-1:0] 			    s_tcdm_cmd_nb, s_ext_cmd_nb;
    logic 					    s_cmd_req, s_tcdm_tx_synch_req, s_tcdm_rx_synch_req, s_ext_tx_synch_req, s_ext_rx_synch_req;
    logic 					    s_pending_transfer,s_pending_transfer_reg;
    logic 					    s_trans_status, s_trans_status_reg;
    
-   logic [MCHAN_LEN_WIDTH+4-1:0] 		    s_trans_cells_nb;
+   logic [MCHAN_CMD_WIDTH+4-1:0] 		    s_trans_cells_nb;
    logic 					    s_mchan_rx_req,s_mchan_tx_req;
    
    always_comb

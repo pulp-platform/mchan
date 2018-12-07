@@ -66,8 +66,10 @@ module trans_allocator
    integer                                           s_loop1,s_loop2,s_loop3,s_loop5,s_loop6,s_loop7,s_loop8,s_loop9,s_loop10,s_loop11,s_loop12;
    genvar                                            i,j;
    
-   logic [(2**($clog2(NB_CTRLS)))-1:0] 		     s_trans_req;
-   logic [(2**($clog2(NB_CTRLS)))-1:0] 		     s_trans_gnt;
+   
+   
+   logic [(2**(TRANS_CID_WIDTH))-1:0] 		     s_trans_req;
+   logic [(2**(TRANS_CID_WIDTH))-1:0] 		     s_trans_gnt;
    
    //**********************************************************
    //*** TRANSACTION ARBITER **********************************
@@ -81,7 +83,7 @@ module trans_allocator
    endgenerate
    
    generate
-      for (i = NB_CTRLS; i<2**($clog2(NB_CTRLS)); i++)
+      for (i = NB_CTRLS; i<2**(TRANS_CID_WIDTH); i++)
 	begin
 	   assign s_trans_req[i] = '0;
 	end
@@ -90,8 +92,8 @@ module trans_allocator
    mchan_arbiter
      #(
        .DATA_WIDTH(0),
-       .N_MASTER((2**($clog2(NB_CTRLS)))),
-       .LOG_MASTER(($clog2(NB_CTRLS)))
+       .N_MASTER((2**(TRANS_CID_WIDTH))),
+       .LOG_MASTER(TRANS_CID_WIDTH)
        )
    trans_manager_arbiter_i
      (

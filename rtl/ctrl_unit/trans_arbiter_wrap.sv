@@ -65,10 +65,10 @@ module trans_arbiter_wrap
     output logic [TRANS_CID_WIDTH-1:0] 			cid_o
     );
    
-   logic [(2**($clog2(NB_CTRLS)))-1:0][DATA_WIDTH-1:0] s_dat;
-   logic [(2**($clog2(NB_CTRLS)))-1:0] 		       s_req;
-   logic [(2**($clog2(NB_CTRLS)))-1:0] 		       s_gnt;
-   genvar 					       i;
+   logic [(2**(TRANS_CID_WIDTH))-1:0][DATA_WIDTH-1:0] s_dat;
+   logic [(2**(TRANS_CID_WIDTH))-1:0] 		      s_req;
+   logic [(2**(TRANS_CID_WIDTH))-1:0] 		      s_gnt;
+   genvar 					      i;
    
    // CTRLS
    generate
@@ -81,7 +81,7 @@ module trans_arbiter_wrap
    endgenerate
    
    generate
-      for (i =NB_CTRLS; i<2**($clog2(NB_CTRLS)); i++)
+      for (i =NB_CTRLS; i<2**(TRANS_CID_WIDTH); i++)
 	begin
 	   assign s_dat[i] = '0;
 	   assign s_req[i] = '0;
@@ -91,8 +91,8 @@ module trans_arbiter_wrap
    mchan_arbiter
      #(
        .DATA_WIDTH(DATA_WIDTH),
-       .N_MASTER(2**($clog2(NB_CTRLS))),
-       .LOG_MASTER($clog2(NB_CTRLS))
+       .N_MASTER(2**(TRANS_CID_WIDTH)),
+       .LOG_MASTER(TRANS_CID_WIDTH)
        )
    arbiter_i
      (

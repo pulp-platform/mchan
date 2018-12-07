@@ -25,10 +25,10 @@ module ctrl_if
     parameter TWD_QUEUE_WIDTH        = TWD_STRIDE_WIDTH+TWD_COUNT_WIDTH,
     parameter PE_ID_WIDTH            = 1,
     // DEFINED IN MCHAN_DEFINES
-    parameter TWD_QUEUE_ADD_WIDTH    = $clog2(TWD_QUEUE_DEPTH),
     parameter MCHAN_OPC_WIDTH        = `MCHAN_OPC_WIDTH,
     parameter MCHAN_LEN_WIDTH        = `MCHAN_LEN_WIDTH,
-    parameter TRANS_SID_WIDTH        = $clog2(NB_TRANSFERS)
+    parameter TWD_QUEUE_ADD_WIDTH    = (TWD_QUEUE_DEPTH == 1) ? 1 : $clog2(TWD_QUEUE_DEPTH),
+    parameter TRANS_SID_WIDTH        = (NB_TRANSFERS == 1) ? 1 : $clog2(NB_TRANSFERS)
     )
    (
     

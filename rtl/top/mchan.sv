@@ -34,7 +34,7 @@ module mchan
     parameter AXI_STRB_WIDTH           = AXI_DATA_WIDTH/8,
 
     parameter PE_ID_WIDTH              = 1,
-    parameter TRANS_SID_WIDTH          = $clog2(NB_TRANSFERS)
+    parameter TRANS_SID_WIDTH          = (NB_TRANSFERS == 1) ? 1 : $clog2(NB_TRANSFERS)
 )
 (
     
@@ -143,7 +143,7 @@ module mchan
    localparam TCDM_OPC_WIDTH  = `TCDM_OPC_WIDTH;
    localparam EXT_OPC_WIDTH   = `EXT_OPC_WIDTH;
    localparam MCHAN_LEN_WIDTH = `MCHAN_LEN_WIDTH;
-   localparam EXT_TID_WIDTH   = $clog2(NB_OUTSND_TRANS);
+   localparam EXT_TID_WIDTH   = (NB_OUTSND_TRANS ==1) ? 1 : $clog2(NB_OUTSND_TRANS);
    
    // SIGNALS
    logic                              s_clk_gated;

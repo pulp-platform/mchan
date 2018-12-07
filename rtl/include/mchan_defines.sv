@@ -38,8 +38,8 @@
 
 // WIDTH OF MCHAN OPCODES
 `define MCHAN_LEN_WIDTH    15
-`define TWD_COUNT_WIDTH    15
-`define TWD_STRIDE_WIDTH   15
+`define TWD_COUNT_WIDTH    31
+`define TWD_STRIDE_WIDTH   31
 
 `define MCHAN_OPC_WIDTH    1
 `define TCDM_OPC_WIDTH     1

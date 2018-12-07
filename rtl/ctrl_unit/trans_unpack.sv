@@ -20,10 +20,12 @@ module trans_unpack
     parameter EXT_ADD_WIDTH      = 29,
     parameter MCHAN_BURST_LENGTH = 64,
     // DEFINED IN MCHAN_DEFINES
-    parameter MCHAN_OPC_WIDTH = `MCHAN_OPC_WIDTH,
-    parameter MCHAN_LEN_WIDTH = `MCHAN_LEN_WIDTH,
-    parameter TCDM_OPC_WIDTH  = `TCDM_OPC_WIDTH,
-    parameter EXT_OPC_WIDTH   = `EXT_OPC_WIDTH
+    parameter MCHAN_OPC_WIDTH    = `MCHAN_OPC_WIDTH,
+    parameter MCHAN_LEN_WIDTH    = `MCHAN_LEN_WIDTH,
+    parameter TCDM_OPC_WIDTH     = `TCDM_OPC_WIDTH,
+    parameter EXT_OPC_WIDTH      = `EXT_OPC_WIDTH,
+    // DERIVED
+    parameter MCHAN_CMD_WIDTH    = MCHAN_LEN_WIDTH - $clog2(MCHAN_BURST_LENGTH) + 1
     )
    (
     
@@ -38,7 +40,7 @@ module trans_unpack
     input logic 		       mchan_inc_i,
     input logic 		       mchan_req_i,
     output logic 		       mchan_gnt_o,
-    output logic [MCHAN_LEN_WIDTH-1:0] mchan_cmd_nb_o,
+    output logic [MCHAN_CMD_WIDTH-1:0] mchan_cmd_nb_o,
     
     output logic [TRANS_SID_WIDTH-1:0] tcdm_sid_o,
     output logic [TCDM_ADD_WIDTH-1:0]  tcdm_add_o,
@@ -83,7 +85,7 @@ module trans_unpack
 				       s_mchan_cur_len;
    
    // CMD COUNTER SIGNAS
-   logic [MCHAN_LEN_WIDTH-1:0]	       s_mchan_cmd_nb,
+   logic [MCHAN_CMD_WIDTH-1:0]	       s_mchan_cmd_nb,
 				       s_mchan_cmd_nb_reg,
 				       s_mchan_cmd_count;
    
@@ -112,10 +114,10 @@ module trans_unpack
 	if ( s_ext_add_burst_crossed == 1'b0  )
 	  s_mchan_first_len = mchan_len_i; // BURST BOUNDARY NOT CROSSED
 	else
-	  s_mchan_first_len = MCHAN_BURST_LENGTH - mchan_ext_add_i[$clog2(MCHAN_BURST_LENGTH)-1:0]; // BURST BOUNDARY CROSSED
+	  s_mchan_first_len = MCHAN_BURST_LENGTH - mchan_ext_add_i[$clog2(MCHAN_BURST_LENGTH)-1:0] - 1; // BURST BOUNDARY CROSSED // # OF BYTES -1
      end
    
-   assign s_mchan_init_rem_len = mchan_len_i - s_mchan_first_len;
+   assign s_mchan_init_rem_len = mchan_len_i - ( s_mchan_first_len + 1 ); // # OF BYTES - 1
    
    always_comb
      begin
@@ -129,12 +131,12 @@ module trans_unpack
    always_comb
      begin
 	if ( s_ext_add_burst_crossed == 1'b0 )
-	  s_mchan_cmd_nb = 0;
+	  s_mchan_cmd_nb = 0; // # OF CMDS - 1
 	else
 	  if ( s_ext_add_burst_aligned == 1'b1 )
-	    s_mchan_cmd_nb = s_mchan_init_rem_len >> $clog2(MCHAN_BURST_LENGTH);
+	    s_mchan_cmd_nb = s_mchan_init_rem_len >> $clog2(MCHAN_BURST_LENGTH); // # OF CMDS - 1
 	  else
-	    s_mchan_cmd_nb = ( s_mchan_init_rem_len >> $clog2(MCHAN_BURST_LENGTH) ) + 1;
+	    s_mchan_cmd_nb = ( s_mchan_init_rem_len >> $clog2(MCHAN_BURST_LENGTH) ) + 1; // # OF CMDS - 1
      end
    
    //**********************************************************
@@ -170,30 +172,30 @@ module trans_unpack
      begin
 	if (rst_ni == 1'b0)
 	  begin
-	     s_mchan_cur_len <= '0;  // LENGTH OF CURRENT MCHAN TRANSACTION
+	     s_mchan_cur_len <= '0;  // LENGTH OF CURRENT MCHAN TRANSACTION // OF BYTES - 1
 	     s_mchan_rem_len <= '0;  // REMAINING LENGHT OF CURRENT MCHAN TRANSFER
 	  end
 	else
 	  begin
 	     if ( mchan_req_i == 1 && mchan_gnt_o == 1 ) // SAMPLES DATA AT THE BEGINNING OF EACH MCHAN TRANSFER
 	       begin
-		  s_mchan_rem_len <= mchan_len_i;
-		  s_mchan_cur_len <= s_mchan_first_len;
+		  s_mchan_rem_len <= mchan_len_i;       // # OF BYTES - 1
+		  s_mchan_cur_len <= s_mchan_first_len; // # OF BYTES - 1
 	       end
 	     else
 	       begin
 		  if ( s_mchan_req == 1'b1 && s_mchan_gnt == 1'b1 )
 		    begin
-		       s_mchan_rem_len <= s_mchan_rem_len - ( s_mchan_cur_len + 1 );
+		       s_mchan_rem_len <= s_mchan_rem_len - ( s_mchan_cur_len + 1 ); // # OF BYTES - 1
 		       if ( s_mchan_rem_len >= MCHAN_BURST_LENGTH-1 )
-			 s_mchan_cur_len <= MCHAN_BURST_LENGTH-1;
+			 s_mchan_cur_len <= MCHAN_BURST_LENGTH-1; // # OF BYTES - 1
 		       else
-			 s_mchan_cur_len <= s_mchan_rem_len;
+			 s_mchan_cur_len <= s_mchan_rem_len; // # OF BYTES - 1
 		    end
 		  else
 		    begin
-		       s_mchan_cur_len <= s_mchan_cur_len;
-		       s_mchan_rem_len <= s_mchan_rem_len;
+		       s_mchan_cur_len <= s_mchan_cur_len; // # OF BYTES - 1
+		       s_mchan_rem_len <= s_mchan_rem_len; // # OF BYTES - 1
 		    end
 	       end
 	  end
@@ -331,7 +333,7 @@ module trans_unpack
 	    begin
 	       mchan_gnt_o = 1'b0;
 	       s_mchan_opc = s_mchan_opc_reg;
-	       s_mchan_len = s_mchan_cur_len;
+	       s_mchan_len = s_mchan_cur_len; // # OF BYTES - 1
 	       tcdm_sid_o  = s_mchan_sid_reg;
 	       ext_sid_o   = s_mchan_sid_reg;
 	       tcdm_add_o  = s_mchan_tcdm_add;
@@ -344,7 +346,7 @@ module trans_unpack
 		    begin
 		       if ( s_trans_complete == 1'b1 )
 			 begin
-			    s_mchan_len = s_mchan_rem_len;
+			    s_mchan_len = s_mchan_rem_len; // # OF BYTES - 1
 			    NS = TRANS_IDLE;
 			 end
 		       else
@@ -417,8 +419,8 @@ module trans_unpack
 	  
 	endcase
 	
-	tcdm_len_o = s_mchan_len;
-	ext_len_o  = s_mchan_len;
+	tcdm_len_o = s_mchan_len;  // # OF BYTES - 1
+	ext_len_o  = s_mchan_len;  // # OF BYTES - 1
 	
      end
    
@@ -428,8 +430,8 @@ module trans_unpack
    
    assign trans_tx_ext_add_o  = ext_add_o[2:0];
    assign trans_tx_tcdm_add_o = tcdm_add_o[2:0];
-   assign trans_tx_len_o = s_mchan_len;
-   assign trans_tx_req_o = ext_req_o && tcdm_req_o;
-   assign mchan_cmd_nb_o = s_mchan_cmd_nb + 1;
-     
+   assign trans_tx_len_o      = s_mchan_len;              // # OF BYTES - 1
+   assign trans_tx_req_o      = ext_req_o && tcdm_req_o;
+   assign mchan_cmd_nb_o      = s_mchan_cmd_nb + 1;       // # OF CMDS
+   
 endmodule

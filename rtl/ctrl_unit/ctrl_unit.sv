@@ -33,9 +33,10 @@ module ctrl_unit
     parameter TWD_STRIDE_WIDTH         = `TWD_STRIDE_WIDTH,
     // DERIVED
     parameter TWD_QUEUE_WIDTH          = TWD_COUNT_WIDTH+TWD_STRIDE_WIDTH,
-    parameter TRANS_CID_WIDTH          = $clog2(NB_CTRLS),
-    parameter TRANS_SID_WIDTH          = $clog2(NB_TRANSFERS),
-    parameter TWD_QUEUE_ADD_WIDTH      = $clog2(TWD_QUEUE_DEPTH)
+    parameter TRANS_CID_WIDTH          = (NB_CTRLS == 1) ? 1 : $clog2(NB_CTRLS),
+    parameter TRANS_SID_WIDTH          = (NB_TRANSFERS == 1) ? 1 : $clog2(NB_TRANSFERS),
+    parameter TWD_QUEUE_ADD_WIDTH      = (TWD_QUEUE_DEPTH == 1) ? 1 : $clog2(TWD_QUEUE_DEPTH),
+    parameter MCHAN_CMD_WIDTH          = MCHAN_LEN_WIDTH - $clog2(MCHAN_BURST_LENGTH) + 1
     )
    (
     
@@ -206,7 +207,7 @@ module ctrl_unit
    logic [TRANS_SID_WIDTH-1:0] 			   s_tx_queue_sid,s_rx_queue_sid;
    logic 					   s_tx_queue_opc,s_rx_queue_opc;
    logic [MCHAN_LEN_WIDTH-1:0] 			   s_tx_queue_len,s_rx_queue_len;
-   logic [MCHAN_LEN_WIDTH-1:0] 			   s_tx_queue_cmd_nb,s_rx_queue_cmd_nb;
+   logic [MCHAN_CMD_WIDTH-1:0] 			   s_tx_queue_cmd_nb,s_rx_queue_cmd_nb;
    logic 					   s_tx_queue_inc,s_rx_queue_inc;
    logic [TCDM_ADD_WIDTH-1:0] 			   s_tx_queue_tcdm_add,s_rx_queue_tcdm_add;
    logic [EXT_ADD_WIDTH-1:0] 			   s_tx_queue_ext_add,s_rx_queue_ext_add;
