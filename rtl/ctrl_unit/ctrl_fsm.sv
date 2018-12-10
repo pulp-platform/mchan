@@ -796,7 +796,6 @@ module ctrl_fsm
 	  
 	  TWD_TCDM_STRIDE:
 	    begin
-	       ctrl_targ_r_valid_o = 1'b1;
 	       if ( ctrl_targ_req_i == 1'b1 )
 		 begin
 		    if( ctrl_targ_type_i == 1'b0 && ctrl_targ_add_i[3:2] == `MCHAN_CMD_ADDR )
