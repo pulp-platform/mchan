@@ -19,7 +19,6 @@
 #
 
 common_cells:
-  commit: da7ac6bc22fd25626afcdceab30bccd58e9123a2
+  commit: tags/v1.10.0
   domain: [soc, cluster]
-  group: pulp-open
-  server: git@iis-git.ee.ethz.ch
+  group: pulp-platform
