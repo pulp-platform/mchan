@@ -13,7 +13,8 @@
 module tcdm_tx_if
 #(
     parameter TRANS_SID_WIDTH = 2,
-    parameter TCDM_ADD_WIDTH  = 12
+    parameter TCDM_ADD_WIDTH  = 12,
+    parameter DEBUG = 0
 )
 (
    
@@ -121,10 +122,11 @@ module tcdm_tx_if
     //********** DECOUPLE REQUEST AND RESPONE CHANNEL **********
     //**********************************************************
    //synopsys translate_off
-   initial 
-   begin
-      $display("%s[MCHAN - TCDM_UNIT] %s%t - %s%m tcdm_tx_cmd_queue_i.DATA_WIDTH = %d%s", "\x1B[1;34m", "\x1B[0;37m", $time, "\x1B[0;35m", TRANS_SID_WIDTH+1, "\x1B[0m");
-      $display("%s[MCHAN - TCDM_UNIT] %s%t - %s%m tcdm_tx_cmd_queue_i.DATA_DEPTH = %d%s", "\x1B[1;34m", "\x1B[0;37m", $time, "\x1B[0;35m", 2, "\x1B[0m");
+   if (DEBUG) begin
+      initial begin
+         $display("%s[MCHAN - TCDM_UNIT] %s%t - %s%m tcdm_tx_cmd_queue_i.DATA_WIDTH = %d%s", "\x1B[1;34m", "\x1B[0;37m", $time, "\x1B[0;35m", TRANS_SID_WIDTH+1, "\x1B[0m");
+         $display("%s[MCHAN - TCDM_UNIT] %s%t - %s%m tcdm_tx_cmd_queue_i.DATA_DEPTH = %d%s", "\x1B[1;34m", "\x1B[0;37m", $time, "\x1B[0;35m", 2, "\x1B[0m");
+      end
    end
    //synopsys translate_on 
 
