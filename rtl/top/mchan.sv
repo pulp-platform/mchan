@@ -281,7 +281,8 @@ module mchan
        .EXT_OPC_WIDTH(EXT_OPC_WIDTH),
        .EXT_TID_WIDTH(EXT_TID_WIDTH),
        .TCDM_ADD_WIDTH(TCDM_ADD_WIDTH),
-       .TCDM_OPC_WIDTH(TCDM_OPC_WIDTH)
+       .TCDM_OPC_WIDTH(TCDM_OPC_WIDTH),
+       .MCHAN_LEN_WIDTH(MCHAN_LEN_WIDTH)
        )
    ext_unit_i
      (
@@ -395,7 +396,8 @@ module mchan
    #(
        .TRANS_SID_WIDTH(TRANS_SID_WIDTH),
        .TCDM_ADD_WIDTH(TCDM_ADD_WIDTH),
-       .TCDM_OPC_WIDTH(TCDM_OPC_WIDTH)
+       .TCDM_OPC_WIDTH(TCDM_OPC_WIDTH),
+       .MCHAN_LEN_WIDTH(MCHAN_LEN_WIDTH)
    )
    tcdm_unit_i
    (
