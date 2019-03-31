@@ -350,7 +350,8 @@ module ext_unit
        .AXI_STRB_WIDTH(AXI_STRB_WIDTH),
        .EXT_ADD_WIDTH(EXT_ADD_WIDTH),
        .EXT_OPC_WIDTH(EXT_OPC_WIDTH),
-       .EXT_TID_WIDTH(EXT_TID_WIDTH)
+       .EXT_TID_WIDTH(EXT_TID_WIDTH),
+       .MCHAN_LEN_WIDTH(MCHAN_LEN_WIDTH)
        )
    ext_rx_if_i
      (

@@ -161,7 +161,8 @@ module tcdm_unit
      #(
        .TRANS_SID_WIDTH(TRANS_SID_WIDTH),
        .TCDM_ADD_WIDTH(TCDM_ADD_WIDTH),
-       .TCDM_OPC_WIDTH(TCDM_OPC_WIDTH)
+       .TCDM_OPC_WIDTH(TCDM_OPC_WIDTH),
+       .MCHAN_LEN_WIDTH(MCHAN_LEN_WIDTH)
        )
    tcdm_tx_cmd_unpack_i
      (
@@ -193,7 +194,8 @@ module tcdm_unit
      #(
        .TRANS_SID_WIDTH(TRANS_SID_WIDTH),
        .TCDM_ADD_WIDTH(TCDM_ADD_WIDTH),
-       .TCDM_OPC_WIDTH(TCDM_OPC_WIDTH)
+       .TCDM_OPC_WIDTH(TCDM_OPC_WIDTH),
+       .MCHAN_LEN_WIDTH(MCHAN_LEN_WIDTH)
        )
    tcdm_rx_cmd_unpack_i
      (
