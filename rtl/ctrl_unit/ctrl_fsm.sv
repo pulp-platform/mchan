@@ -1011,14 +1011,14 @@ module ctrl_fsm
 	  end
      end
    
-   assign cmd_len_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH:0]-1;                 // TRANSFER LENGTH
-   assign cmd_opc_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+1:MCHAN_LEN_WIDTH+1]; // TRANSFER OPCODE
-   assign cmd_inc_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+2:MCHAN_LEN_WIDTH+2]; // INCREMENTAL TRANSFER
-   assign cmd_twd_ext_o           = ctrl_targ_data_i[MCHAN_LEN_WIDTH+3:MCHAN_LEN_WIDTH+3]; // 2D TRANSFER ON EXT SIDE
-   assign cmd_ele_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+4:MCHAN_LEN_WIDTH+4]; // EVENT LINES ENABLE
-   assign cmd_ile_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+5:MCHAN_LEN_WIDTH+5]; // INTERRUPT LINES ENABLE
-   assign cmd_ble_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+6:MCHAN_LEN_WIDTH+6]; // BROADCAST LINES ENABLE
-   assign cmd_twd_tcdm_o          = ctrl_targ_data_i[MCHAN_LEN_WIDTH+7:MCHAN_LEN_WIDTH+7]; // 2D TRANSFER ON TCDM SIDE
+   assign cmd_len_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH-1:0				] - 1;  // TRANSFER LENGTH
+   assign cmd_opc_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH  :MCHAN_LEN_WIDTH  ]; // TRANSFER OPCODE
+   assign cmd_inc_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+1:MCHAN_LEN_WIDTH+1]; // INCREMENTAL TRANSFER
+   assign cmd_twd_ext_o           = ctrl_targ_data_i[MCHAN_LEN_WIDTH+2:MCHAN_LEN_WIDTH+2]; // 2D TRANSFER ON EXT SIDE
+   assign cmd_ele_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+3:MCHAN_LEN_WIDTH+3]; // EVENT LINES ENABLE
+   assign cmd_ile_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+4:MCHAN_LEN_WIDTH+4]; // INTERRUPT LINES ENABLE
+   assign cmd_ble_o               = ctrl_targ_data_i[MCHAN_LEN_WIDTH+5:MCHAN_LEN_WIDTH+5]; // BROADCAST LINES ENABLE
+   assign cmd_twd_tcdm_o          = ctrl_targ_data_i[MCHAN_LEN_WIDTH+6:MCHAN_LEN_WIDTH+6]; // 2D TRANSFER ON TCDM SIDE
    assign cmd_twd_ext_add_o       = twd_ext_alloc_add_i;
    assign cmd_twd_tcdm_add_o      = twd_tcdm_alloc_add_i;
    assign cmd_sid_o               = s_trans_sid;
