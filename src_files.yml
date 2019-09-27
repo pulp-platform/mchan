@@ -37,3 +37,16 @@ mchan:
     ./rtl/trans_unit/trans_unit.sv,
     ./rtl/top/mchan.sv,
   ]
+  jg_slint_top_name: [
+    mchan
+  ]
+  jg_slint_elab_opt: [
+  ]
+  jg_slint_postelab_cmds: [
+  ]
+  jg_slint_clocks: [
+    clk_i,
+  ]
+  jg_slint_resets: [
+    ~rst_ni,
+  ]
