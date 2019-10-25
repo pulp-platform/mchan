@@ -21,5 +21,5 @@
 common_cells:
   commit: v1.13.1
   domain: [soc, cluster]
-  group: pulp-open
-  server: git@iis-git.ee.ethz.ch
+  group: pulp-platform
+  server: https://github.com
