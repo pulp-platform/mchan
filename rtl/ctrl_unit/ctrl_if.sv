@@ -107,6 +107,7 @@ module ctrl_if
     
     // SYNCHRONIZATION INTERFACE
     //***************************************
+    input logic [NB_TRANSFERS-1:0] 	   trans_registered_i,
     input logic [NB_TRANSFERS-1:0] 	   trans_status_i,
     
     // BUSY SIGNAL
@@ -244,6 +245,7 @@ module ctrl_if
       .trans_alloc_clr_o(trans_alloc_clr_o),
       .trans_alloc_status_i(trans_alloc_status_i),
       
+      .trans_registered_i(trans_registered_i),
       .trans_status_i(trans_status_i),
       
       .busy_o(s_decoder_busy)
