@@ -212,7 +212,8 @@ module ctrl_unit
    logic [TCDM_ADD_WIDTH-1:0] 			   s_tx_queue_tcdm_add,s_rx_queue_tcdm_add;
    logic [EXT_ADD_WIDTH-1:0] 			   s_tx_queue_ext_add,s_rx_queue_ext_add;
    
-   logic [NB_TRANSFERS-1:0] 			   s_trans_status;
+   logic [NB_TRANSFERS-1:0] 			   s_trans_status,s_trans_registered;
+   
    
    logic [NB_TRANSFERS-1:0] 			   s_term_sig;
    
@@ -302,7 +303,8 @@ module ctrl_unit
 	      .arb_gnt_i            ( s_arb_gnt               ),
 	      .arb_req_i            ( s_arb_req               ),
 	      .arb_sid_i            ( s_arb_sid               ),
-	      
+
+	      .trans_registered_i   ( s_trans_registered      ),
 	      .trans_status_i       ( s_trans_status          ),
               
               .busy_o               ( s_ctrls_busy[i]         )
@@ -387,7 +389,6 @@ module ctrl_unit
 	      .mchan_rx_sid_i(s_rx_queue_sid),
 	      .mchan_rx_cmd_nb_i(s_rx_queue_cmd_nb),
 	      
-	      
 	      .tcdm_tx_synch_req_i(tcdm_tx_synch_req_i),
 	      .tcdm_tx_synch_sid_i(tcdm_tx_synch_sid_i),
 	      
@@ -400,6 +401,7 @@ module ctrl_unit
 	      .ext_rx_synch_req_i(ext_rx_synch_req_i),
 	      .ext_rx_synch_sid_i(ext_rx_synch_sid_i),
 	      
+	      .trans_registered_o(s_trans_registered[i]),
 	      .trans_status_o(s_trans_status[i]),
 	      
 	      .term_sig_o(s_term_sig[i])
@@ -793,7 +795,7 @@ module ctrl_unit
    cluster_clock_gating mchan_ckgate
      (
       .clk_i      ( clk_i        ),
-      .en_i       ( busy_o       ),
+      .en_i       ( 1'b1         ), //.en_i       ( busy_o       ),
       .test_en_i  ( test_mode_i  ),
       .clk_o      ( clk_gated_o  )
       );

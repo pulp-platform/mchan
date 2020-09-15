@@ -59,6 +59,7 @@ module synch_unit
     input logic [TRANS_SID_WIDTH-1:0] tcdm_rx_synch_sid_i,
     
     // SYNCHRONIZATION CONTOL
+    output logic                      trans_registered_o,
     output logic 		      trans_status_o,
     
     // TERMINATION EVENT
@@ -87,6 +88,14 @@ module synch_unit
 	  s_mchan_tx_req = 1'b1;
 	else
 	  s_mchan_tx_req = 1'b0;
+     end
+   
+   always_comb
+     begin
+	if ( ( s_mchan_rx_req == 1'b1 ) || ( s_mchan_tx_req == 1'b1 ) )
+	  trans_registered_o = 1'b1;
+	else
+	  trans_registered_o = 1'b0;
      end
    
    //**********************************************************
@@ -345,7 +354,7 @@ module synch_unit
 	else
 	  term_sig_o = 1'b0;
      end
-   
+
    //**********************************************************
    //*** GENERATE AN EVENT WHEN THE TRANSFER IS COMPLETE ******
    //**********************************************************

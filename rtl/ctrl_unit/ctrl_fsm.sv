@@ -120,7 +120,8 @@ module ctrl_fsm
     output logic [NB_TRANSFERS-1:0] 	   trans_alloc_clr_o,
     // ALLOC STATUS SIGNALS
     input logic [NB_TRANSFERS-1:0] 	   trans_alloc_status_i,
-    
+    // TRANSFERS REGISTERED
+    input logic [NB_TRANSFERS-1:0] 	   trans_registered_i,
     // TRANSFERS STATUS
     input logic [NB_TRANSFERS-1:0] 	   trans_status_i,
     
@@ -823,7 +824,7 @@ module ctrl_fsm
 	  
 	  BUSY:
 	    begin
-	       if( s_arb_barrier == 1'b0 )
+	       if( s_arb_barrier == 1'b0 ) // WAIT UNTILL TRANSFER REACHES THE ARBITER
 		 NS                  = BUSY2;
 	       else
 		 NS                  = BUSY;
@@ -831,7 +832,7 @@ module ctrl_fsm
 	  
 	  BUSY2:
 	    begin
-	       if( trans_status_i[s_trans_sid] == 1'b1 )
+	       if( trans_registered_i[s_trans_sid] == 1'b1 ) // WAIT UNTILL TRANSFER REACHES THE SYNCH UNIT
 		 NS                  = IDLE;
 	       else
 		 NS                  = BUSY2;
