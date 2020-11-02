@@ -1,0 +1,50 @@
+package:
+  name: mchan
+  authors: 
+    - "Florent Rotenberg <florent.rotenberg@greenwaves-technologies.com>"
+    - "Andreas Kurth <akurth@iis.ee.ethz.ch>"
+    - "Germain Haugou <haugoug@iis.ee.ethz.ch>"
+    - "Davide Rossi <davide.rossi@unibo.it>"
+    - "Angelo Garofalo <angelo.garofalo@unibo.it>"
+    - "Francesco Conti <f.conti@unibo.it>"
+
+dependencies:
+  common_cells: {git: "git@github.com:pulp-platform/common_cells.git", version: 1.13.1}
+
+sources:
+  - include_dirs:
+      - ./rtl/include
+    files:
+      - ./rtl/misc/mchan_arbiter.sv
+      - ./rtl/misc/mchan_arb_primitive.sv
+      - ./rtl/misc/mchan_rr_flag_req.sv
+      - ./rtl/ctrl_unit/ctrl_fsm.sv
+      - ./rtl/ctrl_unit/ctrl_if.sv
+      - ./rtl/ctrl_unit/ctrl_unit.sv
+      - ./rtl/ctrl_unit/synch_unit.sv
+      - ./rtl/ctrl_unit/trans_allocator.sv
+      - ./rtl/ctrl_unit/trans_queue.sv
+      - ./rtl/ctrl_unit/trans_arbiter_wrap.sv
+      - ./rtl/ctrl_unit/trans_unpack.sv
+      - ./rtl/ctrl_unit/twd_trans_queue.sv
+      - ./rtl/ctrl_unit/twd_trans_splitter.sv
+      - ./rtl/ext_unit/ext_ar_buffer.sv
+      - ./rtl/ext_unit/ext_aw_buffer.sv
+      - ./rtl/ext_unit/ext_b_buffer.sv
+      - ./rtl/ext_unit/ext_buffer.sv
+      - ./rtl/ext_unit/ext_opc_buf.sv
+      - ./rtl/ext_unit/ext_r_buffer.sv
+      - ./rtl/ext_unit/ext_rx_if.sv
+      - ./rtl/ext_unit/ext_tid_gen.sv
+      - ./rtl/ext_unit/ext_tx_if.sv
+      - ./rtl/ext_unit/ext_unit.sv
+      - ./rtl/ext_unit/ext_w_buffer.sv
+      - ./rtl/tcdm_unit/tcdm_cmd_unpack.sv
+      - ./rtl/tcdm_unit/tcdm_rx_if.sv
+      - ./rtl/tcdm_unit/tcdm_synch.sv
+      - ./rtl/tcdm_unit/tcdm_tx_if.sv
+      - ./rtl/tcdm_unit/tcdm_unit.sv
+      - ./rtl/trans_unit/trans_aligner.sv
+      - ./rtl/trans_unit/trans_buffers.sv
+      - ./rtl/trans_unit/trans_unit.sv
+      - ./rtl/top/mchan.sv
