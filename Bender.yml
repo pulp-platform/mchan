@@ -9,7 +9,7 @@ package:
     - "Francesco Conti <f.conti@unibo.it>"
 
 dependencies:
-  common_cells: {git: "git@github.com:pulp-platform/common_cells.git", version: 1.13.1}
+  common_cells: {git: "git@github.com:pulp-platform/common_cells.git", version: 1.20.0}
 
 sources:
   - include_dirs:
