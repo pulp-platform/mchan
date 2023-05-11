@@ -215,6 +215,13 @@ module ext_unit
    //**********************************************************
    //*************** TX COMMAND QUEUE *************************
    //**********************************************************
+   localparam int unsigned ID_WIDTH_DIFF = (AXI_ID_WIDTH > EXT_TID_WIDTH) ?
+                                           (AXI_ID_WIDTH - EXT_TID_WIDTH) :
+                                           (EXT_TID_WIDTH - AXI_ID_WIDTH) ;
+
+   logic [EXT_TID_WIDTH-1:0] s_r_ext_id, s_b_ext_id;
+   assign s_r_ext_id = {{ID_WIDTH_DIFF{1'b0}}, s_r_id};
+   assign s_b_ext_id = {{ID_WIDTH_DIFF{1'b0}}, s_b_id};
    
    generic_fifo
      #(
@@ -480,7 +487,7 @@ module ext_unit
       .r_add_i(s_rx_r_add),
       .sid_i(s_rx_sid),
       
-      .r_tid_i(s_r_id[EXT_TID_WIDTH-1:0]),
+      .r_tid_i(s_r_ext_id),
       
       .tcdm_opc_o(tcdm_rx_opc_o),
       .tcdm_len_o(tcdm_rx_len_o),
@@ -517,7 +524,7 @@ module ext_unit
       .r_add_i('0),
       .sid_i(s_tx_sid),
       
-      .r_tid_i(s_b_id[EXT_TID_WIDTH-1:0]),
+      .r_tid_i(s_b_ext_id),
       
       .tcdm_opc_o(),
       .tcdm_len_o(),
