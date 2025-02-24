@@ -83,6 +83,10 @@ module ext_rx_if
     output logic                      axi_master_r_ready_o
     
     );
+
+   localparam int unsigned ID_WIDTH_DIFF = (AXI_ID_WIDTH > EXT_TID_WIDTH) ?
+                                           (AXI_ID_WIDTH - EXT_TID_WIDTH) :
+                                           (EXT_TID_WIDTH - AXI_ID_WIDTH) ;
    
    enum 			      `ifdef SYNTHESIS logic [1:0] `endif { TRANS_IDLE, TRANS_STALLED, TRANS_RUN } CS, NS;
    logic [AXI_ID_WIDTH+4-1:0]	      s_axi_master_ar_id;
@@ -246,6 +250,6 @@ module ext_rx_if
    assign axi_master_ar_id_o     = s_axi_master_ar_id[AXI_ID_WIDTH-1:0];
    
    assign rx_data_dat_o          = axi_master_r_data_i;
-   assign res_tid_o              = axi_master_r_id_i[EXT_TID_WIDTH-1:0];
+   assign res_tid_o              = {{ID_WIDTH_DIFF{1'b0}}, axi_master_r_id_i};
    
 endmodule

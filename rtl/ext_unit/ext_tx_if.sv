@@ -84,6 +84,10 @@ module ext_tx_if
     output logic                       axi_master_b_ready_o
     
     );
+
+   localparam int unsigned ID_WIDTH_DIFF = (AXI_ID_WIDTH > EXT_TID_WIDTH) ?
+                                           (AXI_ID_WIDTH - EXT_TID_WIDTH) :
+                                           (EXT_TID_WIDTH - AXI_ID_WIDTH) ;
    
    // FSM STATES SIGNALS
    enum 			      `ifdef SYNTHESIS logic [1:0] `endif { TRANS_IDLE, TRANS_ACK, TRANS_RUN } CS, NS;
@@ -304,7 +308,7 @@ module ext_tx_if
    assign axi_master_b_ready_o   = 1'b1;
    
    assign release_tid_o = axi_master_b_valid_i;
-   assign res_tid_o     = axi_master_b_id_i[EXT_TID_WIDTH-1:0];
+   assign res_tid_o     = {{ID_WIDTH_DIFF{1'b0}}, axi_master_b_id_i};
    
    assign synch_req_o   = release_tid_o;
    

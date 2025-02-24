@@ -1025,7 +1025,7 @@ module ctrl_fsm
    assign cmd_sid_o               = s_trans_sid;
    
    assign tcdm_add_o              = ctrl_targ_data_i[TCDM_ADD_WIDTH-1:0];
-   assign ext_add_o               = ctrl_targ_data_i[EXT_ADD_WIDTH-1:0];
+   assign ext_add_o               = {{(EXT_ADD_WIDTH-32){1'b0}}, ctrl_targ_data_i};
    
    assign twd_ext_queue_count_o   = s_twd_ext_count[TWD_COUNT_WIDTH:0]-1;
    assign twd_ext_queue_stride_o  = ctrl_targ_data_i[TWD_STRIDE_WIDTH:0]-1;
